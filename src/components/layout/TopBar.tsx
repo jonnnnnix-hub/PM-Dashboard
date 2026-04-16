@@ -12,6 +12,7 @@ const ROUTE_TITLES: Record<string, string> = {
 };
 
 function getTitle(pathname: string): string {
+  if (pathname.includes('/exec-slide')) return 'Exec Slide';
   if (pathname.startsWith('/programs/')) return 'Program Detail';
   return ROUTE_TITLES[pathname] || 'PM Dashboard';
 }

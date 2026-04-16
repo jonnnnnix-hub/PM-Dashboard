@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Pencil, Trash2 } from 'lucide-react';
+import { ArrowLeft, Pencil, Trash2, Presentation } from 'lucide-react';
 import { useDataStore } from '@/data/store';
 import { OverviewTab } from '@/components/programs/OverviewTab';
 import { WorkstreamTable } from '@/components/programs/WorkstreamTable';
@@ -83,6 +83,9 @@ export function ProgramPage() {
             <h2 className="text-xl font-semibold text-slate-100">{program.name}</h2>
           </div>
           <div className="flex items-center gap-2">
+            <Link to={`/programs/${program.id}/exec-slide`} className="btn-primary flex items-center gap-1 text-sm">
+              <Presentation size={14} /> Exec Slide
+            </Link>
             <button onClick={() => setShowEdit(true)} className="btn-ghost flex items-center gap-1 text-sm">
               <Pencil size={14} /> Edit
             </button>

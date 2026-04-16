@@ -4,12 +4,14 @@ import { AppShell } from '@/components/layout/AppShell';
 import { Dashboard } from '@/pages/Dashboard';
 import { ProgramPage } from '@/pages/ProgramPage';
 import { PlaceholderPage } from '@/pages/PlaceholderPage';
+import { ExecSlidePage } from '@/pages/ExecSlidePage';
 
 export default function App() {
   return (
     <DataStoreProvider>
       <BrowserRouter>
         <Routes>
+          <Route path="programs/:id/exec-slide" element={<ExecSlidePage />} />
           <Route element={<AppShell />}>
             <Route index element={<Dashboard />} />
             <Route path="programs/:id" element={<ProgramPage />} />
