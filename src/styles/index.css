@@ -114,4 +114,32 @@
   .skeleton {
     @apply bg-slate-700 animate-pulse;
   }
+
+  .sidebar {
+    @apply bg-slate-850 border-r border-slate-700 h-screen flex flex-col;
+  }
+
+  .topbar {
+    @apply bg-slate-850 border-b border-slate-700 h-12 flex items-center px-4 gap-4;
+  }
+
+  .page-title {
+    @apply text-xl font-semibold text-slate-100;
+  }
+
+  .section-title {
+    @apply text-sm font-semibold text-slate-300 uppercase tracking-wider mb-3;
+  }
+
+  .divider {
+    @apply border-t border-slate-700 my-4;
+  }
+
+  .nav-link {
+    @apply flex items-center gap-3 px-3 py-2 text-sm text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors;
+  }
+
+  .nav-link-active {
+    @apply nav-link text-blue-400 bg-blue-500/10;
+  }
 }
