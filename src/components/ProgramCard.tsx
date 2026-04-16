@@ -1,6 +1,8 @@
-import { Calendar, AlertTriangle, Clock, Users } from 'lucide-react';
+import { Calendar, AlertTriangle, Clock, ArrowUpRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import type { Program, RAGStatus } from '../types';
+import type { Program, RAGStatus, ProgramType } from '../types';
+import { Card, Chip, Avatar, RagDot } from './ui';
+import type { AccentName } from './ui';
 
 interface ProgramCardProps {
   program: Program & {
@@ -12,106 +14,142 @@ interface ProgramCardProps {
   };
 }
 
-function getRAGColor(rag: RAGStatus | undefined): string {
-  switch (rag) {
-    case 'green': return 'bg-emerald-400';
-    case 'yellow': return 'bg-amber-400';
-    case 'red': return 'bg-red-400';
-    default: return 'bg-slate-400';
-  }
-}
+const TYPE_ACCENT: Record<ProgramType, AccentName> = {
+  migration: 'indigo',
+  'price-increase': 'teal',
+  'market-rollout': 'rose',
+  other: 'sky',
+};
+
+const TYPE_LABEL: Record<ProgramType, string> = {
+  migration: 'Migration',
+  'price-increase': 'Price Increase',
+  'market-rollout': 'Market Rollout',
+  other: 'Other',
+};
 
 function getDaysUntilLaunch(launchDate: string): number {
   const launch = new Date(launchDate);
   const now = new Date();
-  const diff = launch.getTime() - now.getTime();
-  return Math.ceil(diff / (1000 * 60 * 60 * 24));
+  return Math.ceil((launch.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 }
 
 export function ProgramCard({ program }: ProgramCardProps) {
-  const daysUntilLaunch = getDaysUntilLaunch(program.launch_date);
-  const isOverdue = daysUntilLaunch < 0 && program.status === 'in-flight';
+  const days = getDaysUntilLaunch(program.launch_date);
+  const isOverdue = days < 0 && program.status === 'in-flight';
+  const accent = TYPE_ACCENT[program.program_type];
+  const progress = program.gate_progress;
+  const pct = progress && progress.total > 0
+    ? Math.round((progress.completed / progress.total) * 100)
+    : 0;
 
   return (
-    <Link to={`/program/${program.id}`} className="block group">
-      <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:border-blue-500/50 transition-colors">
+    <Link to={`/program/${program.id}`} className="block group focus:outline-none">
+      <Card padding="md" hover className="h-full flex flex-col">
         {/* Header */}
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex-1 min-w-0">
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 mb-1">
-              <span className={`w-2 h-2 rounded-full ${getRAGColor(program.latest_rag)}`} />
-              <h3 className="text-sm font-semibold text-white truncate">{program.name}</h3>
+              <RagDot rag={program.latest_rag} />
+              <h3
+                className="text-[15px] font-semibold leading-tight truncate"
+                style={{ color: 'var(--ink-primary)' }}
+              >
+                {program.name}
+              </h3>
             </div>
-            <p className="text-xs text-slate-400 font-mono">{program.codename}</p>
+            <div className="flex items-center gap-2">
+              <span
+                className="text-[11px] font-mono"
+                style={{ color: 'var(--ink-tertiary)' }}
+              >
+                {program.codename}
+              </span>
+              <Chip tone={accent} size="xs">{TYPE_LABEL[program.program_type]}</Chip>
+            </div>
           </div>
-          <span className={`text-xs px-2 py-1 rounded ${
-            program.program_type === 'migration' ? 'bg-blue-500/20 text-blue-400' :
-            program.program_type === 'price-increase' ? 'bg-emerald-500/20 text-emerald-400' :
-            program.program_type === 'market-rollout' ? 'bg-purple-500/20 text-purple-400' :
-            'bg-slate-500/20 text-slate-400'
-          }`}>
-            {program.program_type.replace('-', ' ')}
-          </span>
+          <ArrowUpRight
+            size={18}
+            className="opacity-0 group-hover:opacity-100 transition-opacity"
+            style={{ color: 'var(--accent)' }}
+          />
         </div>
 
-        {/* Launch Info */}
-        <div className="flex items-center gap-4 mb-3 text-xs">
-          <div className="flex items-center gap-1.5 text-slate-400">
-            <Calendar className="w-3.5 h-3.5" />
-            <span className={isOverdue ? 'text-red-400' : ''}>
-              {daysUntilLaunch > 0 ? `T-${daysUntilLaunch} days` : 
-               daysUntilLaunch === 0 ? 'Launch Day' : 
-               `Launched ${Math.abs(daysUntilLaunch)}d ago`}
-            </span>
-          </div>
-          <div className="flex items-center gap-1.5 text-slate-400">
-            <Users className="w-3.5 h-3.5" />
-            <span>{program.owner}</span>
-          </div>
-        </div>
+        {/* Summary */}
+        {program.latest_summary ? (
+          <p
+            className="text-[13px] leading-relaxed clamp-2 mb-4"
+            style={{ color: 'var(--ink-secondary)' }}
+          >
+            {program.latest_summary}
+          </p>
+        ) : (
+          <p
+            className="text-[13px] italic mb-4"
+            style={{ color: 'var(--ink-tertiary)' }}
+          >
+            No status update this week.
+          </p>
+        )}
 
-        {/* Gate Progress */}
-        {program.gate_progress && (
-          <div className="mb-3">
-            <div className="flex items-center justify-between text-xs mb-1">
-              <span className="text-slate-400">{program.gate_progress.current_gate}</span>
-              <span className="text-slate-400">{program.gate_progress.completed}/{program.gate_progress.total}</span>
+        {/* Gate progress */}
+        {progress && progress.total > 0 && (
+          <div className="mb-4">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[11px] font-medium" style={{ color: 'var(--ink-secondary)' }}>
+                {progress.current_gate}
+              </span>
+              <span className="text-[11px] tabular font-semibold" style={{ color: 'var(--ink-primary)' }}>
+                {progress.completed}/{progress.total}
+              </span>
             </div>
-            <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden">
-              <div 
-                className={`h-full transition-all ${
-                  program.overdue_gate ? 'bg-red-400' : 'bg-blue-500'
-                }`}
-                style={{ width: `${(program.gate_progress.completed / program.gate_progress.total) * 100}%` }}
+            <div
+              className="h-1.5 rounded-full overflow-hidden"
+              style={{ background: 'var(--bg-subtle)' }}
+            >
+              <div
+                className="h-full rounded-full transition-all"
+                style={{
+                  width: `${pct}%`,
+                  background: program.overdue_gate ? 'var(--danger)' : 'var(--accent)',
+                }}
               />
             </div>
           </div>
         )}
 
-        {/* Latest Summary */}
-        {program.latest_summary && (
-          <p className="text-xs text-slate-400 line-clamp-2 mb-3">{program.latest_summary}</p>
-        )}
-
         {/* Footer */}
-        <div className="flex items-center justify-between pt-3 border-t border-slate-700">
-          <div className="flex items-center gap-3 text-xs text-slate-400">
-            {program.unreviewed_meetings ? (
-              <span className="flex items-center gap-1 text-amber-400">
-                <Clock className="w-3 h-3" />
-                {program.unreviewed_meetings} pending
-              </span>
-            ) : null}
-            {program.overdue_gate && (
-              <span className="flex items-center gap-1 text-red-400">
-                <AlertTriangle className="w-3 h-3" />
-                Overdue
-              </span>
-            )}
+        <div className="mt-auto pt-3 flex items-center justify-between" style={{ borderTop: '1px solid var(--border)' }}>
+          <div className="flex items-center gap-2">
+            <Avatar name={program.owner || 'Unassigned'} size={24} />
+            <div>
+              <div className="text-[11px] font-medium" style={{ color: 'var(--ink-primary)' }}>
+                {program.owner || 'Unassigned'}
+              </div>
+              <div className="text-[10px] flex items-center gap-1" style={{ color: 'var(--ink-tertiary)' }}>
+                <Calendar size={9} />
+                <span className={isOverdue ? '' : ''} style={isOverdue ? { color: 'var(--danger)' } : undefined}>
+                  {days > 0 ? `T-${days}d` : days === 0 ? 'Launch day' : `Launched ${Math.abs(days)}d ago`}
+                </span>
+              </div>
+            </div>
           </div>
-          <span className="text-xs text-blue-400 group-hover:text-blue-300">View →</span>
+          <div className="flex items-center gap-1.5">
+            {program.overdue_gate && (
+              <Chip tone="danger" size="xs" icon={<AlertTriangle size={10} />}>
+                Overdue
+              </Chip>
+            )}
+            {program.unreviewed_meetings ? (
+              <Chip tone="amber" size="xs" icon={<Clock size={10} />}>
+                {program.unreviewed_meetings}
+              </Chip>
+            ) : null}
+          </div>
         </div>
-      </div>
+      </Card>
     </Link>
   );
 }
+
+export default ProgramCard;

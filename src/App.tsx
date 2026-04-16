@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
-import Sidebar from './components/Sidebar';
+import { ThemeProvider } from './context/ThemeContext';
 import Dashboard from './pages/Dashboard';
 import BandwidthTracker from './pages/BandwidthTracker';
 import ProgramDetail from './pages/ProgramDetail';
@@ -10,22 +10,11 @@ import WeeklyDigest from './pages/WeeklyDigest';
 import Settings from './pages/Settings';
 import './index.css';
 
-function Layout({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="min-h-screen bg-slate-950 text-slate-200">
-      <Sidebar />
-      <main className="ml-64">
-        {children}
-      </main>
-    </div>
-  );
-}
-
 function App() {
   return (
-    <AppProvider>
-      <BrowserRouter>
-        <Layout>
+    <ThemeProvider>
+      <AppProvider>
+        <BrowserRouter>
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/bandwidth" element={<BandwidthTracker />} />
@@ -35,9 +24,9 @@ function App() {
             <Route path="/settings" element={<Settings />} />
             <Route path="/program/:id" element={<ProgramDetail />} />
           </Routes>
-        </Layout>
-      </BrowserRouter>
-    </AppProvider>
+        </BrowserRouter>
+      </AppProvider>
+    </ThemeProvider>
   );
 }
 
