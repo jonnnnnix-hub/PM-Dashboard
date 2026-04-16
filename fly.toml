@@ -1,0 +1,21 @@
+# fly.toml — LPMO Command Center
+# Run `fly launch --no-deploy` once to claim an app name, then `fly deploy`.
+# Or pre-set the app name here and run `fly apps create <name>` first.
+
+app = "lpmo-command-center"
+primary_region = "sjc"   # San Jose — close to us-west-2 Supabase
+
+[build]
+  dockerfile = "Dockerfile"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"
