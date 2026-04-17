@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import {
   Plus, Activity, FileText, CheckCircle2, Mic, Calendar, Clock,
-  Sparkles, ArrowUpRight, MessageSquare,
+  Sparkles, ArrowUpRight, MessageSquare, FileUp,
 } from 'lucide-react';
 import {
   AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip,
@@ -11,6 +11,7 @@ import { supabase } from '../lib/supabase';
 import { useApp } from '../context/AppContext';
 import { ProgramCard } from '../components/ProgramCard';
 import { NewProgramModal } from '../components/NewProgramModal';
+import { IngestPRDModal } from '../components/IngestPRDModal';
 import {
   Shell, Card, CardHeader, Button, Chip, EmptyState, StatTile, Avatar,
 } from '../components/ui';
@@ -137,6 +138,7 @@ export default function Dashboard() {
   const { programs, loading, refreshPrograms } = useApp();
   const [dashboardPrograms, setDashboardPrograms] = useState<DashboardProgram[]>([]);
   const [showNewProgram, setShowNewProgram] = useState(false);
+  const [showIngest, setShowIngest] = useState(false);
   const [stats, setStats] = useState({
     activePrograms: 0,
     pendingStatuses: 0,
@@ -346,13 +348,22 @@ export default function Dashboard() {
         weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
       })}
       topBarRight={
-        <Button
-          variant="primary"
-          leftIcon={<Plus size={16} />}
-          onClick={() => setShowNewProgram(true)}
-        >
-          New program
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="secondary"
+            leftIcon={<FileUp size={16} />}
+            onClick={() => setShowIngest(true)}
+          >
+            Ingest PRD
+          </Button>
+          <Button
+            variant="primary"
+            leftIcon={<Plus size={16} />}
+            onClick={() => setShowNewProgram(true)}
+          >
+            New program
+          </Button>
+        </div>
       }
       rightRail={rightRail}
     >
@@ -463,6 +474,11 @@ export default function Dashboard() {
       <NewProgramModal
         isOpen={showNewProgram}
         onClose={() => setShowNewProgram(false)}
+        onSuccess={() => refreshPrograms()}
+      />
+      <IngestPRDModal
+        isOpen={showIngest}
+        onClose={() => setShowIngest(false)}
         onSuccess={() => refreshPrograms()}
       />
     </Shell>

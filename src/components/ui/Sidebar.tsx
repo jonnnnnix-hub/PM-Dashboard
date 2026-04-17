@@ -5,6 +5,7 @@ import {
   CalendarDays,
   Mic,
   Newspaper,
+  GanttChart,
   Settings as SettingsIcon,
 } from 'lucide-react';
 import { Logo } from './Logo';
@@ -24,6 +25,7 @@ const NAV: NavItem[] = [
   { name: 'Weekly 1:1s',href: '/weekly',    icon: CalendarDays,    accent: 'teal' },
   { name: 'Meetings',   href: '/meetings',  icon: Mic,             accent: 'indigo' },
   { name: 'Digest',     href: '/digest',    icon: Newspaper,       accent: 'rose' },
+  { name: 'Timeline',   href: '/timeline',  icon: GanttChart,      accent: 'amber' },
   { name: 'Settings',   href: '/settings',  icon: SettingsIcon,    accent: 'sky' },
 ];
 

@@ -7,6 +7,7 @@ import ProgramDetail from './pages/ProgramDetail';
 import WeeklyTracker from './pages/WeeklyTracker';
 import MeetingsHub from './pages/MeetingsHub';
 import WeeklyDigest from './pages/WeeklyDigest';
+import MemoTimeline from './pages/MemoTimeline';
 import Settings from './pages/Settings';
 import './index.css';
 
@@ -21,6 +22,7 @@ function App() {
             <Route path="/weekly" element={<WeeklyTracker />} />
             <Route path="/meetings" element={<MeetingsHub />} />
             <Route path="/digest" element={<WeeklyDigest />} />
+            <Route path="/timeline" element={<MemoTimeline />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/program/:id" element={<ProgramDetail />} />
           </Routes>
