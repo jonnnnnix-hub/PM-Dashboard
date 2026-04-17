@@ -46,7 +46,18 @@ export function NewProgramModal({ isOpen, onClose, onSuccess }: NewProgramModalP
       onClose();
       setFormData(EMPTY);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to create program';
+      // Supabase throws a PostgrestError plain object, not an Error instance.
+      // Pull message from whatever shape we got and surface it verbatim so the
+      // user (and we) can see the real reason.
+      console.error('Create program failed:', err);
+      let message = 'Failed to create program';
+      if (err && typeof err === 'object') {
+        const e = err as { message?: string; details?: string; hint?: string; code?: string };
+        message = e.message || e.details || e.hint || e.code || message;
+        if (e.code) message = `${message} (${e.code})`;
+      } else if (typeof err === 'string') {
+        message = err;
+      }
       setError(message);
     } finally {
       setLoading(false);
