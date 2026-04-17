@@ -12,6 +12,7 @@ import { useApp } from '../context/AppContext';
 import { ProgramCard } from '../components/ProgramCard';
 import { NewProgramModal } from '../components/NewProgramModal';
 import { IngestPRDModal } from '../components/IngestPRDModal';
+import { MobileSummary } from '../components/MobileSummary';
 import {
   Shell, Card, CardHeader, Button, Chip, EmptyState, StatTile, Avatar,
 } from '../components/ui';
@@ -348,56 +349,32 @@ export default function Dashboard() {
         weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
       })}
       topBarRight={
-        <div className="flex items-center gap-1.5 md:gap-2">
-          {/* Mobile + tablet: icon-only */}
-          <button
-            type="button"
+        <div className="hidden lg:flex items-center gap-2">
+          <Button
+            variant="secondary"
+            leftIcon={<FileUp size={16} />}
             onClick={() => setShowIngest(true)}
-            aria-label="Ingest PRD"
-            className="lg:hidden w-10 h-10 inline-flex items-center justify-center rounded-full transition-colors"
-            style={{
-              background: 'var(--bg-surface)',
-              border: '1px solid var(--border-strong)',
-              color: 'var(--ink-secondary)',
-            }}
           >
-            <FileUp size={16} />
-          </button>
-          <button
-            type="button"
+            Ingest PRD
+          </Button>
+          <Button
+            variant="primary"
+            leftIcon={<Plus size={16} />}
             onClick={() => setShowNewProgram(true)}
-            aria-label="New program"
-            className="lg:hidden w-10 h-10 inline-flex items-center justify-center rounded-full transition-colors"
-            style={{
-              background: 'var(--accent)',
-              color: '#fff',
-              border: '1px solid var(--accent)',
-            }}
           >
-            <Plus size={16} />
-          </button>
-
-          {/* Desktop: full buttons */}
-          <div className="hidden lg:flex items-center gap-2">
-            <Button
-              variant="secondary"
-              leftIcon={<FileUp size={16} />}
-              onClick={() => setShowIngest(true)}
-            >
-              Ingest PRD
-            </Button>
-            <Button
-              variant="primary"
-              leftIcon={<Plus size={16} />}
-              onClick={() => setShowNewProgram(true)}
-            >
-              New program
-            </Button>
-          </div>
+            New program
+          </Button>
         </div>
       }
       rightRail={rightRail}
     >
+      {/* Mobile: simplified read-only summary */}
+      <div className="lg:hidden">
+        <MobileSummary programs={dashboardPrograms} pageLabel="Overview" />
+      </div>
+
+      {/* Desktop: full dashboard */}
+      <div className="hidden lg:block">
       {/* Hero row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <ProgramStatusGauge onTrack={onTrackCount} total={totalActive} />
@@ -501,6 +478,9 @@ export default function Dashboard() {
           </div>
         </section>
       )}
+
+      </div>
+      {/* /desktop */}
 
       <NewProgramModal
         isOpen={showNewProgram}

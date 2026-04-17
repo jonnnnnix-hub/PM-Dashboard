@@ -10,6 +10,7 @@ import { useApp } from '../context/AppContext';
 import { Shell, Card, CardHeader, Button, Chip, EmptyState } from '../components/ui';
 import { NewProgramModal } from '../components/NewProgramModal';
 import { IngestPRDModal } from '../components/IngestPRDModal';
+import { MobileSummary } from '../components/MobileSummary';
 import { computeLRMDates, LRM_META, type LRMMilestone } from '../lib/lrm';
 import type { Program } from '../types';
 
@@ -135,44 +136,23 @@ export default function MemoTimeline() {
       title="Memo timeline"
       subtitle="Launch Readiness Memos auto-calculated from each program's launch date"
       topBarRight={
-        <div className="flex items-center gap-1.5 md:gap-2">
-          <button
-            type="button"
-            onClick={() => setIngestOpen(true)}
-            aria-label="Ingest PRD"
-            className="lg:hidden w-10 h-10 inline-flex items-center justify-center rounded-full transition-colors"
-            style={{
-              background: 'var(--bg-surface)',
-              border: '1px solid var(--border-strong)',
-              color: 'var(--ink-secondary)',
-            }}
-          >
-            <Calendar size={16} />
-          </button>
-          <button
-            type="button"
-            onClick={() => setNewProgramOpen(true)}
-            aria-label="New program"
-            className="lg:hidden w-10 h-10 inline-flex items-center justify-center rounded-full transition-colors"
-            style={{
-              background: 'var(--accent)',
-              color: '#fff',
-              border: '1px solid var(--accent)',
-            }}
-          >
-            <Plus size={16} />
-          </button>
-          <div className="hidden lg:flex items-center gap-2">
-            <Button variant="secondary" leftIcon={<Calendar size={16} />} onClick={() => setIngestOpen(true)}>
-              Ingest PRD
-            </Button>
-            <Button variant="primary" leftIcon={<Plus size={16} />} onClick={() => setNewProgramOpen(true)}>
-              New program
-            </Button>
-          </div>
+        <div className="hidden lg:flex items-center gap-2">
+          <Button variant="secondary" leftIcon={<Calendar size={16} />} onClick={() => setIngestOpen(true)}>
+            Ingest PRD
+          </Button>
+          <Button variant="primary" leftIcon={<Plus size={16} />} onClick={() => setNewProgramOpen(true)}>
+            New program
+          </Button>
         </div>
       }
     >
+      {/* Mobile: read-only timeline summary */}
+      <div className="lg:hidden">
+        <MobileSummary programs={programs} pageLabel="Timeline" />
+      </div>
+
+      {/* Desktop */}
+      <div className="hidden lg:block">
       {/* Controls + legend */}
       <Card padding="md" className="mb-5">
         <div className="flex flex-col md:flex-row md:flex-wrap md:items-center md:justify-between gap-3 md:gap-4">
@@ -493,6 +473,7 @@ export default function MemoTimeline() {
           {unscheduledCount} program{unscheduledCount === 1 ? '' : 's'} without a launch date are hidden from the timeline.
         </div>
       )}
+      </div>
 
       <NewProgramModal
         isOpen={newProgramOpen}

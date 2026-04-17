@@ -12,6 +12,7 @@ import {
   Shell, Card, CardHeader, Button, Chip, Textarea, EmptyState,
   ACCENTS, ACCENT_VAR,
 } from '../components/ui';
+import { MobileSummary } from '../components/MobileSummary';
 
 export default function BandwidthTracker() {
   const { programs, currentWeek, setCurrentWeek, getWeekStart } = useApp();
@@ -153,7 +154,7 @@ export default function BandwidthTracker() {
       title="Bandwidth tracker"
       subtitle="Plan how your week is split across programs"
       topBarRight={
-        <div className="flex items-center gap-2">
+        <div className="hidden lg:flex items-center gap-2">
           <Button
             variant="secondary"
             size="md"
@@ -174,6 +175,13 @@ export default function BandwidthTracker() {
         </div>
       }
     >
+      {/* Mobile: read-only summary */}
+      <div className="lg:hidden">
+        <MobileSummary programs={programs} pageLabel="Bandwidth" />
+      </div>
+
+      {/* Desktop only */}
+      <div className="hidden lg:block">
       {/* Week navigator + capacity hero */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         {/* Week selector */}
@@ -443,6 +451,7 @@ export default function BandwidthTracker() {
           </ul>
         )}
       </Card>
+      </div>
     </Shell>
   );
 }

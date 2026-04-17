@@ -21,6 +21,7 @@ import { Avatar } from '../components/ui/Avatar';
 import { EmptyState } from '../components/ui/EmptyState';
 import { StatTile } from '../components/ui/StatTile';
 import { ACCENT_VAR, type AccentName } from '../components/ui/tokens';
+import { MobileSummary } from '../components/MobileSummary';
 
 const PROGRAM_ACCENTS: AccentName[] = ['coral', 'amber', 'teal', 'indigo', 'rose', 'sky'];
 const accentFor = (id: string) => PROGRAM_ACCENTS[
@@ -115,9 +116,11 @@ export default function WeeklyTracker() {
   );
 
   const topBarRight = (
-    <Button variant="primary" size="sm" leftIcon={<Sparkles size={14} />}>
-      Generate 1:1 brief
-    </Button>
+    <div className="hidden lg:block">
+      <Button variant="primary" size="sm" leftIcon={<Sparkles size={14} />}>
+        Generate 1:1 brief
+      </Button>
+    </div>
   );
 
   return (
@@ -128,7 +131,13 @@ export default function WeeklyTracker() {
       topBarRight={topBarRight}
       rightRail={rightRail}
     >
-      <div className="space-y-6">
+      {/* Mobile: read-only summary */}
+      <div className="lg:hidden">
+        <MobileSummary programs={programs} pageLabel="Weekly 1:1" />
+      </div>
+
+      {/* Desktop */}
+      <div className="hidden lg:block space-y-6">
         {/* Week navigator */}
         <Card padding="md">
           <div className="flex items-center justify-between flex-wrap gap-4">

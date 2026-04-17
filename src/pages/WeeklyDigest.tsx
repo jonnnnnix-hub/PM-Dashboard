@@ -24,6 +24,8 @@ import { Button } from '../components/ui/Button';
 import { Chip } from '../components/ui/Chip';
 import { EmptyState } from '../components/ui/EmptyState';
 import type { AccentName } from '../components/ui/tokens';
+import { useApp } from '../context/AppContext';
+import { MobileSummary } from '../components/MobileSummary';
 
 type Section = {
   heading: string;
@@ -58,6 +60,7 @@ function matchSection(sections: Record<string, string[]>, keywords: string[]): s
 }
 
 export default function WeeklyDigestPage() {
+  const { programs } = useApp();
   const [digests, setDigests] = useState<WeeklyDigest[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
@@ -145,15 +148,17 @@ export default function WeeklyDigestPage() {
   };
 
   const topBarRight = (
-    <Button
-      variant="primary"
-      size="sm"
-      leftIcon={<RefreshCw size={14} className={generating ? 'animate-spin' : ''} />}
-      onClick={handleGenerate}
-      loading={generating}
-    >
-      {generating ? 'Generating…' : 'Generate digest'}
-    </Button>
+    <div className="hidden lg:block">
+      <Button
+        variant="primary"
+        size="sm"
+        leftIcon={<RefreshCw size={14} className={generating ? 'animate-spin' : ''} />}
+        onClick={handleGenerate}
+        loading={generating}
+      >
+        {generating ? 'Generating…' : 'Generate digest'}
+      </Button>
+    </div>
   );
 
   const rightRail = (
@@ -232,6 +237,13 @@ export default function WeeklyDigestPage() {
       topBarRight={topBarRight}
       rightRail={rightRail}
     >
+      {/* Mobile: read-only summary */}
+      <div className="lg:hidden">
+        <MobileSummary programs={programs} pageLabel="Digest" />
+      </div>
+
+      {/* Desktop */}
+      <div className="hidden lg:block">
       {loading ? (
         <div className="grid gap-4">
           <Card padding="lg" className="h-48 animate-pulse-slow" />
@@ -492,6 +504,7 @@ export default function WeeklyDigestPage() {
           </div>
         </Card>
       )}
+      </div>
     </Shell>
   );
 }

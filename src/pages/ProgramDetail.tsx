@@ -177,9 +177,11 @@ export default function ProgramDetail() {
         { label: program.name },
       ]}
       topBarRight={
-        <Button variant="secondary" size="sm" leftIcon={<Pencil size={14} />}>
-          Edit program
-        </Button>
+        <div className="hidden lg:block">
+          <Button variant="secondary" size="sm" leftIcon={<Pencil size={14} />}>
+            Edit program
+          </Button>
+        </div>
       }
     >
       <div className="space-y-6">
