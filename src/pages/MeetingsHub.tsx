@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
+import { supabase } from '../lib/supabase';
 import {
   Mic,
   Square,
@@ -15,6 +16,7 @@ import {
   Users,
   Sparkles,
   Upload,
+  Trash2,
 } from 'lucide-react';
 import type { Meeting } from '../types';
 import { Shell } from '../components/ui/Shell';
@@ -34,12 +36,17 @@ const STATUS_TONE: Record<Meeting['status'], 'success' | 'warning' | 'sky' | 'da
 };
 
 export default function MeetingsHub() {
-  const { programs, meetings, addMeeting } = useApp();
-  const [selectedProgram, setSelectedProgram] = useState<string>('');
+  const { programs, meetings, addMeeting, deleteMeeting } = useApp();
+  const initialProgram = typeof window !== 'undefined'
+    ? new URLSearchParams(window.location.search).get('program') || ''
+    : '';
+  const [selectedProgram, setSelectedProgram] = useState<string>(initialProgram);
   const [meetingTitle, setMeetingTitle] = useState('');
   const [attendees, setAttendees] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [filterProgram, setFilterProgram] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -82,30 +89,78 @@ export default function MeetingsHub() {
 
       mediaRecorder.onstop = async () => {
         const audioBlob = new Blob(chunks, { type: 'audio/webm' });
-        const newMeeting: Meeting = {
-          id: crypto.randomUUID(),
-          program_id: selectedProgram,
-          title: meetingTitle,
-          date: new Date().toISOString(),
-          attendees: attendees.split(',').map(a => a.trim()).filter(Boolean),
-          duration_seconds: recordingTime,
-          recording_url: URL.createObjectURL(audioBlob),
-          transcript: '',
-          summary: '',
-          key_points: [],
-          action_items: [],
-          decisions: [],
-          embedding_ids: [],
-          status: 'transcribing',
-          created_at: new Date().toISOString(),
-        };
-
-        addMeeting(newMeeting);
         stream.getTracks().forEach(track => track.stop());
-        setRecordingTime(0);
-        setMeetingTitle('');
-        setAttendees('');
-        setSelectedProgram('');
+
+        // Capture current form values (state may reset before upload finishes)
+        const capturedProgramId = selectedProgram;
+        const capturedTitle = meetingTitle;
+        const capturedAttendees = attendees;
+        const capturedDuration = recordingTime;
+
+        setUploading(true);
+        setUploadError(null);
+
+        try {
+          const meetingId = crypto.randomUUID();
+          const filePath = `${capturedProgramId}/${meetingId}.webm`;
+
+          // 1) Upload blob to Supabase Storage
+          const { error: upErr } = await supabase.storage
+            .from('meeting-recordings')
+            .upload(filePath, audioBlob, {
+              contentType: 'audio/webm',
+              upsert: false,
+            });
+          if (upErr) throw upErr;
+
+          const { data: pub } = supabase.storage
+            .from('meeting-recordings')
+            .getPublicUrl(filePath);
+          const recordingUrl = pub.publicUrl;
+
+          // 2) Persist meeting row
+          const row = {
+            id: meetingId,
+            program_id: capturedProgramId,
+            title: capturedTitle,
+            date: new Date().toISOString(),
+            attendees: capturedAttendees.split(',').map(a => a.trim()).filter(Boolean),
+            duration_seconds: capturedDuration,
+            recording_url: recordingUrl,
+            transcript: '',
+            summary: '',
+            key_points: [],
+            action_items: [],
+            decisions: [],
+            embedding_ids: [],
+            status: 'ready' as const,
+          };
+
+          const { data: inserted, error: insErr } = await supabase
+            .from('meetings')
+            .insert([row])
+            .select()
+            .single();
+          if (insErr) throw insErr;
+
+          addMeeting(inserted as Meeting);
+
+          // Reset form
+          setRecordingTime(0);
+          setMeetingTitle('');
+          setAttendees('');
+          setSelectedProgram('');
+        } catch (err: unknown) {
+          console.error('Save recording failed:', err);
+          let msg = 'Failed to save recording';
+          if (err && typeof err === 'object') {
+            const e = err as { message?: string; error?: string };
+            msg = e.message || e.error || msg;
+          }
+          setUploadError(msg);
+        } finally {
+          setUploading(false);
+        }
       };
 
       mediaRecorder.start();
@@ -144,6 +199,21 @@ export default function MeetingsHub() {
       case 'transcribing': return <FileAudio size={12} />;
       case 'recording': return <Mic size={12} />;
       default: return <AlertCircle size={12} />;
+    }
+  };
+
+  const handleDelete = async (meeting: Meeting) => {
+    if (!confirm(`Delete "${meeting.title}"? This removes the recording and archive entry.`)) return;
+    try {
+      // Best-effort: remove audio file from storage
+      if (meeting.recording_url && meeting.recording_url.includes('meeting-recordings/')) {
+        const path = meeting.recording_url.split('meeting-recordings/')[1];
+        if (path) await supabase.storage.from('meeting-recordings').remove([path]);
+      }
+      await deleteMeeting(meeting.id);
+    } catch (err) {
+      console.error('Delete failed:', err);
+      alert('Could not delete meeting. Please try again.');
     }
   };
 
@@ -222,7 +292,31 @@ export default function MeetingsHub() {
 
         {/* Dropzone-style recording hero */}
         <Card padding="lg" elevated>
-          {isRecording ? (
+          {uploadError && (
+            <div
+              className="rounded-xl px-3 py-2.5 text-sm mb-4"
+              style={{
+                background: 'var(--danger-soft)',
+                color: 'var(--danger)',
+                border: '1px solid color-mix(in oklab, var(--danger) 30%, transparent)',
+              }}
+            >
+              {uploadError}
+            </div>
+          )}
+          {uploading ? (
+            <div className="flex items-center gap-4">
+              <Loader2 size={20} className="animate-spin" style={{ color: 'var(--coral-ink)' }} />
+              <div>
+                <div className="text-base font-semibold" style={{ color: 'var(--ink-primary)' }}>
+                  Uploading recording…
+                </div>
+                <div className="text-sm" style={{ color: 'var(--ink-secondary)' }}>
+                  Saving to your program archive. Don't close this tab.
+                </div>
+              </div>
+            </div>
+          ) : isRecording ? (
             <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
               <div className="flex items-center gap-5">
                 <div
@@ -463,6 +557,27 @@ export default function MeetingsHub() {
                             <Play size={14} />
                           </a>
                         )}
+                        <button
+                          onClick={() => handleDelete(meeting)}
+                          className="w-8 h-8 rounded-lg flex items-center justify-center focus-ring transition-colors"
+                          style={{
+                            border: '1px solid var(--border)',
+                            color: 'var(--ink-secondary)',
+                            background: 'transparent',
+                          }}
+                          onMouseEnter={e => {
+                            e.currentTarget.style.background = 'var(--danger-soft)';
+                            e.currentTarget.style.color = 'var(--danger)';
+                          }}
+                          onMouseLeave={e => {
+                            e.currentTarget.style.background = 'transparent';
+                            e.currentTarget.style.color = 'var(--ink-secondary)';
+                          }}
+                          title="Delete meeting"
+                          aria-label="Delete meeting"
+                        >
+                          <Trash2 size={14} />
+                        </button>
                         <a
                           href={`/meeting/${meeting.id}`}
                           className="flex items-center gap-1.5 px-3 h-8 rounded-lg text-sm font-medium focus-ring transition-colors"

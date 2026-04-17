@@ -10,7 +10,9 @@ interface AppContextType {
   bandwidthAllocations: BandwidthAllocation[];
   loading: boolean;
   refreshPrograms: () => Promise<void>;
+  refreshMeetings: () => Promise<void>;
   addMeeting: (meeting: Meeting) => void;
+  deleteMeeting: (id: string) => Promise<void>;
   addTemplate: (template: LaunchChecklistTemplate) => void;
   updateTemplate: (id: string, template: Partial<LaunchChecklistTemplate>) => void;
   deleteTemplate: (id: string) => void;
@@ -55,12 +57,37 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const fetchMeetings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('meetings')
+        .select('*')
+        .order('date', { ascending: false });
+      if (error) throw error;
+      setMeetings((data || []) as Meeting[]);
+    } catch (error) {
+      console.error('Error fetching meetings:', error);
+    }
+  };
+
   useEffect(() => {
     fetchPrograms();
+    fetchMeetings();
   }, []);
 
   const addMeeting = (meeting: Meeting) => {
-    setMeetings(prev => [...prev, meeting]);
+    setMeetings(prev => [meeting, ...prev]);
+  };
+
+  const deleteMeeting = async (id: string) => {
+    const prev = meetings;
+    setMeetings(curr => curr.filter(m => m.id !== id));
+    const { error } = await supabase.from('meetings').delete().eq('id', id);
+    if (error) {
+      console.error('Delete meeting failed:', error);
+      setMeetings(prev);
+      throw error;
+    }
   };
 
   const addTemplate = (template: LaunchChecklistTemplate) => {
@@ -83,7 +110,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     bandwidthAllocations: _bandwidthAllocations,
     loading,
     refreshPrograms: fetchPrograms,
+    refreshMeetings: fetchMeetings,
     addMeeting,
+    deleteMeeting,
     addTemplate,
     updateTemplate,
     deleteTemplate,

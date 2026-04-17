@@ -31,6 +31,8 @@ import {
   Send,
   Pin,
   Pencil,
+  Play,
+  Mic,
 } from 'lucide-react';
 import { Shell } from '../components/ui/Shell';
 import { Card, CardHeader } from '../components/ui/Card';
@@ -316,7 +318,7 @@ export default function ProgramDetail() {
             <LaunchReadinessTab program={program} checklist={checklist} />
           )}
           {activeTab === 'documents' && <DocumentsTab documents={documents} />}
-          {activeTab === 'meetings' && <MeetingsTab meetings={meetings} />}
+          {activeTab === 'meetings' && <MeetingsTab meetings={meetings} programId={id!} />}
           {activeTab === 'brain' && <ProgramBrainTab program={program} />}
         </div>
       </div>
@@ -1212,7 +1214,7 @@ function DocumentCard({
 
 /* ================= Meetings ================= */
 
-function MeetingsTab({ meetings }: { meetings: Meeting[] }) {
+function MeetingsTab({ meetings, programId }: { meetings: Meeting[]; programId: string }) {
   const statusTone: Record<Meeting['status'], 'success' | 'warning' | 'sky' | 'danger' | 'neutral'> = {
     ready: 'success',
     processing: 'sky',
@@ -1222,18 +1224,20 @@ function MeetingsTab({ meetings }: { meetings: Meeting[] }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
           <div className="text-base font-semibold" style={{ color: 'var(--ink-primary)' }}>
-            Meeting history
+            Meeting archive
           </div>
           <div className="text-xs mt-0.5" style={{ color: 'var(--ink-tertiary)' }}>
-            {meetings.length} meeting{meetings.length === 1 ? '' : 's'} for this program
+            {meetings.length} recording{meetings.length === 1 ? '' : 's'} · stored permanently
           </div>
         </div>
-        <Button variant="primary" size="sm" leftIcon={<Plus size={14} />}>
-          Record meeting
-        </Button>
+        <a href={`/meetings?program=${programId}`}>
+          <Button variant="primary" size="sm" leftIcon={<Mic size={14} />}>
+            Record meeting
+          </Button>
+        </a>
       </div>
 
       <Card padding="none">
@@ -1283,6 +1287,22 @@ function MeetingsTab({ meetings }: { meetings: Meeting[] }) {
                       )}
                     </div>
                   </div>
+                  {meeting.recording_url && (
+                    <a
+                      href={meeting.recording_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="flex items-center gap-1.5 px-3 h-8 rounded-lg text-sm font-medium focus-ring transition-colors"
+                      style={{
+                        background: 'var(--coral-soft)',
+                        color: 'var(--coral-ink)',
+                      }}
+                      title="Play recording"
+                    >
+                      <Play size={12} /> Play
+                    </a>
+                  )}
                 </div>
               </div>
             ))}
