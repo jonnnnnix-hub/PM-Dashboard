@@ -1,8 +1,7 @@
 import type { ReactNode } from 'react';
-import { Bell, Search, Menu } from 'lucide-react';
+import { Bell, Menu, Search } from 'lucide-react';
 import { Avatar } from './Avatar';
 import { ThemeToggle } from './ThemeToggle';
-import { Logo } from './Logo';
 
 interface BreadcrumbItem {
   label: string;
@@ -43,10 +42,7 @@ export function TopBar({ title, subtitle, breadcrumbs, rightSlot, onOpenMobileNa
           <Menu size={20} />
         </button>
 
-        {/* Mobile brand mark */}
-        <div className="md:hidden flex-shrink-0">
-          <Logo size={26} />
-        </div>
+
 
         {/* Breadcrumbs — desktop only */}
         {breadcrumbs && breadcrumbs.length > 0 && (
@@ -116,25 +112,10 @@ export function TopBar({ title, subtitle, breadcrumbs, rightSlot, onOpenMobileNa
           </kbd>
         </label>
 
-        {/* Search icon — tablet only */}
-        <button
-          aria-label="Search"
-          className="hidden md:inline-flex lg:hidden w-10 h-10 items-center justify-center rounded-full transition-colors flex-shrink-0"
-          style={{
-            background: 'var(--bg-surface)',
-            border: '1px solid var(--border-strong)',
-            color: 'var(--ink-secondary)',
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-subtle)')}
-          onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--bg-surface)')}
-        >
-          <Search size={16} />
-        </button>
-
-        {/* Notification bell — sm+ */}
+        {/* Notification bell — xl+ only (rarely needed, saves space) */}
         <button
           aria-label="Notifications"
-          className="hidden sm:inline-flex relative w-10 h-10 items-center justify-center rounded-full transition-colors flex-shrink-0"
+          className="hidden xl:inline-flex relative w-10 h-10 items-center justify-center rounded-full transition-colors flex-shrink-0"
           style={{
             background: 'var(--bg-surface)',
             border: '1px solid var(--border-strong)',
