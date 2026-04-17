@@ -1,4 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
 import {
   LayoutDashboard,
   Activity,
@@ -7,6 +8,7 @@ import {
   Newspaper,
   GanttChart,
   Settings as SettingsIcon,
+  X,
 } from 'lucide-react';
 import { Logo } from './Logo';
 import { Avatar } from './Avatar';
@@ -29,40 +31,45 @@ const NAV: NavItem[] = [
   { name: 'Settings',   href: '/settings',  icon: SettingsIcon,    accent: 'sky' },
 ];
 
-export function Sidebar() {
-  const { pathname } = useLocation();
+interface SidebarProps {
+  mobileOpen?: boolean;
+  onMobileClose?: () => void;
+}
 
+function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
+  const { pathname } = useLocation();
   return (
-    <aside
-      className="hidden md:flex fixed inset-y-0 left-0 w-[240px] flex-col z-30"
-      style={{
-        background: 'var(--bg-surface)',
-        borderRight: '1px solid var(--border)',
-      }}
-      aria-label="Primary navigation"
-    >
+    <>
       {/* Brand */}
-      <div className="px-5 pt-6 pb-7">
-        <Link to="/" className="inline-flex items-center gap-2.5" aria-label="LPMO home">
-          <Logo size={32} />
-          <span
-            style={{
-              fontFamily: "Fraunces, ui-serif, Georgia, serif",
-              fontWeight: 600,
-              fontSize: 20,
-              letterSpacing: '-0.01em',
-              color: 'var(--ink-primary)',
-            }}
-          >
-            LPMO
-          </span>
-        </Link>
-        <div
-          className="mt-1 text-[11px] font-medium tracking-wide"
-          style={{ color: 'var(--ink-tertiary)' }}
+      <div className="px-5 pt-6 pb-7 flex items-center justify-between">
+        <Link
+          to="/"
+          onClick={onNavigate}
+          className="inline-flex items-center gap-2.5"
+          aria-label="LPMO home"
         >
-          Command Center
-        </div>
+          <Logo size={32} />
+          <div>
+            <div
+              style={{
+                fontFamily: 'Fraunces, ui-serif, Georgia, serif',
+                fontWeight: 600,
+                fontSize: 20,
+                letterSpacing: '-0.01em',
+                color: 'var(--ink-primary)',
+                lineHeight: 1,
+              }}
+            >
+              LPMO
+            </div>
+            <div
+              className="mt-1 text-[11px] font-medium tracking-wide"
+              style={{ color: 'var(--ink-tertiary)' }}
+            >
+              Command Center
+            </div>
+          </div>
+        </Link>
       </div>
 
       {/* Section label */}
@@ -83,6 +90,7 @@ export function Sidebar() {
               <li key={item.href}>
                 <Link
                   to={item.href}
+                  onClick={onNavigate}
                   className="group relative flex items-center gap-3 rounded-xl pl-3 pr-3 py-2.5 text-sm font-medium transition-colors"
                   style={{
                     background: isActive ? tone.soft : 'transparent',
@@ -95,7 +103,6 @@ export function Sidebar() {
                     if (!isActive) e.currentTarget.style.background = 'transparent';
                   }}
                 >
-                  {/* Active accent bar */}
                   <span
                     className="absolute left-0 top-1/2 -translate-y-1/2 rounded-r-full transition-all"
                     style={{
@@ -124,7 +131,10 @@ export function Sidebar() {
         >
           <Avatar name="Alex Park" size={32} accent="coral" status="online" />
           <div className="flex-1 min-w-0">
-            <div className="text-[13px] font-semibold truncate" style={{ color: 'var(--ink-primary)' }}>
+            <div
+              className="text-[13px] font-semibold truncate"
+              style={{ color: 'var(--ink-primary)' }}
+            >
               Alex Park
             </div>
             <div className="text-[11px] truncate" style={{ color: 'var(--ink-tertiary)' }}>
@@ -133,7 +143,73 @@ export function Sidebar() {
           </div>
         </div>
       </div>
-    </aside>
+    </>
+  );
+}
+
+export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
+  // Close on Escape + lock body scroll when mobile drawer is open
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onMobileClose?.();
+    };
+    window.addEventListener('keydown', onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [mobileOpen, onMobileClose]);
+
+  return (
+    <>
+      {/* Desktop sidebar — always visible on md+ */}
+      <aside
+        className="hidden md:flex fixed inset-y-0 left-0 w-[240px] flex-col z-30"
+        style={{
+          background: 'var(--bg-surface)',
+          borderRight: '1px solid var(--border)',
+        }}
+        aria-label="Primary navigation"
+      >
+        <SidebarContent />
+      </aside>
+
+      {/* Mobile drawer */}
+      {mobileOpen && (
+        <>
+          <div
+            className="md:hidden fixed inset-0 z-40 animate-fadein"
+            style={{ background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(2px)' }}
+            onClick={onMobileClose}
+            aria-hidden="true"
+          />
+          <aside
+            className="md:hidden fixed inset-y-0 left-0 w-[280px] max-w-[85vw] flex flex-col z-50 animate-slidein-left"
+            style={{
+              background: 'var(--bg-surface)',
+              borderRight: '1px solid var(--border)',
+            }}
+            aria-label="Primary navigation"
+          >
+            <button
+              type="button"
+              aria-label="Close navigation"
+              onClick={onMobileClose}
+              className="absolute top-3 right-3 w-9 h-9 inline-flex items-center justify-center rounded-full z-10"
+              style={{ color: 'var(--ink-secondary)' }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-subtle)')}
+              onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+            >
+              <X size={18} />
+            </button>
+            <SidebarContent onNavigate={onMobileClose} />
+          </aside>
+        </>
+      )}
+    </>
   );
 }
 

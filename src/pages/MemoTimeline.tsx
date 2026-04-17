@@ -32,7 +32,8 @@ function buildProgramMarkers(p: Program): Marker[] {
 // Visual density: px per day along the horizontal axis
 const DAY_WIDTH = 14;
 const ROW_HEIGHT = 68;
-const LABEL_COL_WIDTH = 220;
+const LABEL_COL_WIDTH_DESKTOP = 220;
+const LABEL_COL_WIDTH_MOBILE = 140;
 
 export default function MemoTimeline() {
   const navigate = useNavigate();
@@ -117,33 +118,73 @@ export default function MemoTimeline() {
 
   const legendItems: LRMMilestone[] = ['t60', 't30', 't1', 'launch'];
 
+  // Responsive label column
+  const [labelColWidth, setLabelColWidth] = useState<number>(
+    typeof window !== 'undefined' && window.innerWidth < 768 ? LABEL_COL_WIDTH_MOBILE : LABEL_COL_WIDTH_DESKTOP
+  );
+  useEffect(() => {
+    const onResize = () => {
+      setLabelColWidth(window.innerWidth < 768 ? LABEL_COL_WIDTH_MOBILE : LABEL_COL_WIDTH_DESKTOP);
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
   return (
     <Shell
       title="Memo timeline"
       subtitle="Launch Readiness Memos auto-calculated from each program's launch date"
       topBarRight={
-        <div className="flex items-center gap-2">
-          <Button variant="secondary" leftIcon={<Calendar size={16} />} onClick={() => setIngestOpen(true)}>
-            Ingest PRD
-          </Button>
-          <Button variant="primary" leftIcon={<Plus size={16} />} onClick={() => setNewProgramOpen(true)}>
-            New program
-          </Button>
+        <div className="flex items-center gap-1.5 md:gap-2">
+          <button
+            type="button"
+            onClick={() => setIngestOpen(true)}
+            aria-label="Ingest PRD"
+            className="sm:hidden w-10 h-10 inline-flex items-center justify-center rounded-full transition-colors"
+            style={{
+              background: 'var(--bg-surface)',
+              border: '1px solid var(--border-strong)',
+              color: 'var(--ink-secondary)',
+            }}
+          >
+            <Calendar size={16} />
+          </button>
+          <button
+            type="button"
+            onClick={() => setNewProgramOpen(true)}
+            aria-label="New program"
+            className="sm:hidden w-10 h-10 inline-flex items-center justify-center rounded-full transition-colors"
+            style={{
+              background: 'var(--accent)',
+              color: '#fff',
+              border: '1px solid var(--accent)',
+            }}
+          >
+            <Plus size={16} />
+          </button>
+          <div className="hidden sm:flex items-center gap-2">
+            <Button variant="secondary" leftIcon={<Calendar size={16} />} onClick={() => setIngestOpen(true)}>
+              Ingest PRD
+            </Button>
+            <Button variant="primary" leftIcon={<Plus size={16} />} onClick={() => setNewProgramOpen(true)}>
+              New program
+            </Button>
+          </div>
         </div>
       }
     >
       {/* Controls + legend */}
       <Card padding="md" className="mb-5">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col md:flex-row md:flex-wrap md:items-center md:justify-between gap-3 md:gap-4">
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
             <Button variant="ghost" size="sm" leftIcon={<ChevronLeft size={14} />} onClick={() => shift(-1)}>
-              Prev
+              <span className="hidden sm:inline">Prev</span>
             </Button>
             <Button variant="secondary" size="sm" onClick={goToday}>Today</Button>
             <Button variant="ghost" size="sm" rightIcon={<ChevronRight size={14} />} onClick={() => shift(1)}>
-              Next
+              <span className="hidden sm:inline">Next</span>
             </Button>
-            <div className="ml-3 flex items-center gap-1 rounded-lg p-1" style={{ background: 'var(--bg-subtle)' }}>
+            <div className="ml-1 sm:ml-3 flex items-center gap-1 rounded-lg p-1" style={{ background: 'var(--bg-subtle)' }}>
               {[3, 6, 12].map((m) => (
                 <button
                   key={m}
@@ -161,7 +202,7 @@ export default function MemoTimeline() {
             </div>
           </div>
 
-          <div className="flex items-center flex-wrap gap-3">
+          <div className="flex items-center flex-wrap gap-2.5 sm:gap-3">
             {legendItems.map((k) => {
               const meta = LRM_META[k];
               return (
@@ -220,7 +261,7 @@ export default function MemoTimeline() {
             {/* Fixed label column */}
             <div
               className="flex-shrink-0 sticky left-0 z-10"
-              style={{ width: LABEL_COL_WIDTH, background: 'var(--bg-surface)', borderRight: '1px solid var(--border)' }}
+              style={{ width: labelColWidth, background: 'var(--bg-surface)', borderRight: '1px solid var(--border)' }}
             >
               {/* Empty header matching month+week rows (48+28=76) */}
               <div style={{ height: 76, borderBottom: '1px solid var(--border)' }} />
@@ -228,14 +269,14 @@ export default function MemoTimeline() {
                 <button
                   key={p.id}
                   onClick={() => navigate(`/program/${p.id}`)}
-                  className="w-full text-left px-5 flex flex-col justify-center hover:bg-[var(--bg-subtle)] transition-colors"
+                  className="w-full text-left px-3 md:px-5 flex flex-col justify-center hover:bg-[var(--bg-subtle)] transition-colors"
                   style={{ height: ROW_HEIGHT, borderBottom: '1px solid var(--border)' }}
                 >
                   <div className="text-[13px] font-semibold truncate" style={{ color: 'var(--ink-primary)' }}>
                     {p.name}
                   </div>
                   <div className="text-[11px] mt-0.5 truncate" style={{ color: 'var(--ink-tertiary)' }}>
-                    {p.codename ? `${p.codename} · ` : ''}Launch {format(new Date(p.launch_date + 'T00:00:00'), 'MMM d, yyyy')}
+                    {p.codename ? `${p.codename} · ` : ''}{format(new Date(p.launch_date + 'T00:00:00'), 'MMM d, yyyy')}
                   </div>
                 </button>
               ))}
