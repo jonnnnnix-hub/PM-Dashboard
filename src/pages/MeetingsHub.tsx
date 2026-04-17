@@ -27,6 +27,7 @@ import { Input, Select, Field } from '../components/ui/Input';
 import { Avatar } from '../components/ui/Avatar';
 import { EmptyState } from '../components/ui/EmptyState';
 import { StatTile } from '../components/ui/StatTile';
+import { MeetingDetailModal } from '../components/MeetingDetailModal';
 
 const STATUS_TONE: Record<Meeting['status'], 'success' | 'warning' | 'sky' | 'danger' | 'neutral'> = {
   ready: 'success',
@@ -47,6 +48,7 @@ export default function MeetingsHub() {
   const [recordingTime, setRecordingTime] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [activeMeeting, setActiveMeeting] = useState<Meeting | null>(null);
   const [filterProgram, setFilterProgram] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -470,10 +472,19 @@ export default function MeetingsHub() {
                 return (
                   <div
                     key={meeting.id}
-                    className="px-5 py-4 transition-colors"
+                    className="px-5 py-4 transition-colors cursor-pointer"
                     style={{
                       borderBottom: idx === filteredMeetings.length - 1 ? 'none' : '1px solid var(--border)',
                     }}
+                    onClick={() => setActiveMeeting(meeting)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setActiveMeeting(meeting);
+                      }
+                    }}
+                    role="button"
+                    tabIndex={0}
                     onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-subtle)')}
                     onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                   >
@@ -533,7 +544,7 @@ export default function MeetingsHub() {
                         )}
                       </div>
 
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                         {meeting.recording_url && (
                           <a
                             href={meeting.recording_url}
@@ -578,17 +589,20 @@ export default function MeetingsHub() {
                         >
                           <Trash2 size={14} />
                         </button>
-                        <a
-                          href={`/meeting/${meeting.id}`}
+                        <button
+                          type="button"
+                          onClick={() => setActiveMeeting(meeting)}
                           className="flex items-center gap-1.5 px-3 h-8 rounded-lg text-sm font-medium focus-ring transition-colors"
                           style={{
                             background: 'var(--coral-soft)',
                             color: 'var(--coral-ink)',
+                            border: 'none',
+                            cursor: 'pointer',
                           }}
                         >
                           View
                           <ExternalLink size={12} />
-                        </a>
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -598,6 +612,16 @@ export default function MeetingsHub() {
           )}
         </Card>
       </div>
+
+      <MeetingDetailModal
+        meeting={activeMeeting}
+        programName={
+          activeMeeting
+            ? programs.find(p => p.id === activeMeeting.program_id)?.name
+            : undefined
+        }
+        onClose={() => setActiveMeeting(null)}
+      />
     </Shell>
   );
 }

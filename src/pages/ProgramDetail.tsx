@@ -35,6 +35,7 @@ import {
   Mic,
 } from 'lucide-react';
 import { Shell } from '../components/ui/Shell';
+import { MeetingDetailModal } from '../components/MeetingDetailModal';
 import { Card, CardHeader } from '../components/ui/Card';
 import { Tabs } from '../components/ui/Tabs';
 import { Chip } from '../components/ui/Chip';
@@ -318,7 +319,9 @@ export default function ProgramDetail() {
             <LaunchReadinessTab program={program} checklist={checklist} />
           )}
           {activeTab === 'documents' && <DocumentsTab documents={documents} />}
-          {activeTab === 'meetings' && <MeetingsTab meetings={meetings} programId={id!} />}
+          {activeTab === 'meetings' && (
+            <MeetingsTab meetings={meetings} programId={id!} programName={program.name} />
+          )}
           {activeTab === 'brain' && <ProgramBrainTab program={program} />}
         </div>
       </div>
@@ -1214,7 +1217,16 @@ function DocumentCard({
 
 /* ================= Meetings ================= */
 
-function MeetingsTab({ meetings, programId }: { meetings: Meeting[]; programId: string }) {
+function MeetingsTab({
+  meetings,
+  programId,
+  programName,
+}: {
+  meetings: Meeting[];
+  programId: string;
+  programName: string;
+}) {
+  const [activeMeeting, setActiveMeeting] = useState<Meeting | null>(null);
   const statusTone: Record<Meeting['status'], 'success' | 'warning' | 'sky' | 'danger' | 'neutral'> = {
     ready: 'success',
     processing: 'sky',
@@ -1259,6 +1271,15 @@ function MeetingsTab({ meetings, programId }: { meetings: Meeting[]; programId: 
                 style={{
                   borderBottom: idx === meetings.length - 1 ? 'none' : '1px solid var(--border)',
                 }}
+                onClick={() => setActiveMeeting(meeting)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setActiveMeeting(meeting);
+                  }
+                }}
+                role="button"
+                tabIndex={0}
                 onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-subtle)')}
                 onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
               >
@@ -1309,6 +1330,12 @@ function MeetingsTab({ meetings, programId }: { meetings: Meeting[]; programId: 
           </div>
         )}
       </Card>
+
+      <MeetingDetailModal
+        meeting={activeMeeting}
+        programName={programName}
+        onClose={() => setActiveMeeting(null)}
+      />
     </div>
   );
 }
