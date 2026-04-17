@@ -26,19 +26,54 @@ export function NewProgramModal({ isOpen, onClose, onSuccess }: NewProgramModalP
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const slugify = (s: string) =>
+    s
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 48);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
     try {
-      const { error } = await supabase.from('programs').insert([
-        {
-          ...formData,
-          stakeholders: formData.stakeholders.split(',').map((s) => s.trim()).filter(Boolean),
-          tags: formData.tags.split(',').map((t) => t.trim()).filter(Boolean),
-        },
-      ]);
+      // Defensive: trim + coerce every string field. Never send null/empty for
+      // NOT NULL columns. Auto-derive codename from name when blank.
+      const name = (formData.name || '').trim();
+      let codename = (formData.codename || '').trim();
+      const owner = (formData.owner || '').trim();
+      const launch_date = (formData.launch_date || '').trim();
+
+      if (!name) throw new Error('Program name is required');
+      if (!owner) throw new Error('Owner is required');
+      if (!launch_date) throw new Error('Launch date is required');
+
+      if (!codename) codename = slugify(name) || `program-${Date.now()}`;
+
+      const payload = {
+        name,
+        codename,
+        program_type: formData.program_type,
+        status: formData.status,
+        launch_date,
+        owner,
+        description: (formData.description || '').trim() || null,
+        stakeholders: formData.stakeholders
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean),
+        tags: formData.tags
+          .split(',')
+          .map((t) => t.trim())
+          .filter(Boolean),
+      };
+
+      console.log('Creating program with payload:', payload);
+
+      const { error } = await supabase.from('programs').insert([payload]);
 
       if (error) throw error;
 
@@ -110,9 +145,8 @@ export function NewProgramModal({ isOpen, onClose, onSuccess }: NewProgramModalP
               placeholder="e.g., Hotstar SEA Migration"
             />
           </Field>
-          <Field label="Codename" required>
+          <Field label="Codename" hint="Auto-generated from name if blank">
             <Input
-              required
               value={formData.codename}
               onChange={(e) => setFormData({ ...formData, codename: e.target.value })}
               placeholder="e.g., hotstar-sea"
