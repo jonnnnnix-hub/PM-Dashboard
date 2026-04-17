@@ -349,12 +349,12 @@ export default function Dashboard() {
       })}
       topBarRight={
         <div className="flex items-center gap-1.5 md:gap-2">
-          {/* Mobile: icon-only */}
+          {/* Mobile + tablet: icon-only */}
           <button
             type="button"
             onClick={() => setShowIngest(true)}
             aria-label="Ingest PRD"
-            className="sm:hidden w-10 h-10 inline-flex items-center justify-center rounded-full transition-colors"
+            className="lg:hidden w-10 h-10 inline-flex items-center justify-center rounded-full transition-colors"
             style={{
               background: 'var(--bg-surface)',
               border: '1px solid var(--border-strong)',
@@ -367,7 +367,7 @@ export default function Dashboard() {
             type="button"
             onClick={() => setShowNewProgram(true)}
             aria-label="New program"
-            className="sm:hidden w-10 h-10 inline-flex items-center justify-center rounded-full transition-colors"
+            className="lg:hidden w-10 h-10 inline-flex items-center justify-center rounded-full transition-colors"
             style={{
               background: 'var(--accent)',
               color: '#fff',
@@ -377,8 +377,8 @@ export default function Dashboard() {
             <Plus size={16} />
           </button>
 
-          {/* Tablet+: full buttons */}
-          <div className="hidden sm:flex items-center gap-2">
+          {/* Desktop: full buttons */}
+          <div className="hidden lg:flex items-center gap-2">
             <Button
               variant="secondary"
               leftIcon={<FileUp size={16} />}

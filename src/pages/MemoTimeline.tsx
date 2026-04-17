@@ -140,7 +140,7 @@ export default function MemoTimeline() {
             type="button"
             onClick={() => setIngestOpen(true)}
             aria-label="Ingest PRD"
-            className="sm:hidden w-10 h-10 inline-flex items-center justify-center rounded-full transition-colors"
+            className="lg:hidden w-10 h-10 inline-flex items-center justify-center rounded-full transition-colors"
             style={{
               background: 'var(--bg-surface)',
               border: '1px solid var(--border-strong)',
@@ -153,7 +153,7 @@ export default function MemoTimeline() {
             type="button"
             onClick={() => setNewProgramOpen(true)}
             aria-label="New program"
-            className="sm:hidden w-10 h-10 inline-flex items-center justify-center rounded-full transition-colors"
+            className="lg:hidden w-10 h-10 inline-flex items-center justify-center rounded-full transition-colors"
             style={{
               background: 'var(--accent)',
               color: '#fff',
@@ -162,7 +162,7 @@ export default function MemoTimeline() {
           >
             <Plus size={16} />
           </button>
-          <div className="hidden sm:flex items-center gap-2">
+          <div className="hidden lg:flex items-center gap-2">
             <Button variant="secondary" leftIcon={<Calendar size={16} />} onClick={() => setIngestOpen(true)}>
               Ingest PRD
             </Button>
