@@ -366,3 +366,17 @@ input[type="range"].lpmo-range::-moz-range-thumb {
     animation-timing-function: linear !important;
   }
 }
+
+/* Progress bar shimmer — slides a highlight across an advancing bar */
+@keyframes lpmo-progress-shimmer {
+  0% { background-position: -100% 0; }
+  100% { background-position: 200% 0; }
+}
+.animate-progress-shimmer { animation: lpmo-progress-shimmer 1.8s ease-in-out infinite; }
+
+/* Indeterminate progress — bar slides right-to-left continuously */
+@keyframes lpmo-progress-indeterminate {
+  0% { left: -40%; }
+  100% { left: 100%; }
+}
+.animate-progress-indeterminate { animation: lpmo-progress-indeterminate 1.4s ease-in-out infinite; }

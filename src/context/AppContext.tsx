@@ -73,6 +73,33 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     fetchPrograms();
     fetchMeetings();
+
+    // Subscribe to meeting changes so progress bars update live for any viewer
+    const channel = supabase
+      .channel('meetings-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'meetings' },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            const row = payload.new as Meeting;
+            setMeetings((prev) =>
+              prev.some((m) => m.id === row.id) ? prev : [row, ...prev]
+            );
+          } else if (payload.eventType === 'UPDATE') {
+            const row = payload.new as Meeting;
+            setMeetings((prev) => prev.map((m) => (m.id === row.id ? row : m)));
+          } else if (payload.eventType === 'DELETE') {
+            const oldRow = payload.old as { id: string };
+            setMeetings((prev) => prev.filter((m) => m.id !== oldRow.id));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const addMeeting = (meeting: Meeting) => {

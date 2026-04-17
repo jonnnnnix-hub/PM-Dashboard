@@ -18,6 +18,7 @@ import {
 import type { Meeting } from '../types';
 import { Chip } from './ui/Chip';
 import { Avatar } from './ui/Avatar';
+import { ProgressBar } from './ui/ProgressBar';
 
 interface MeetingDetailModalProps {
   meeting: Meeting | null;
@@ -71,6 +72,8 @@ export function MeetingDetailModal({ meeting, programName, onClose }: MeetingDet
   const decisions = meeting.decisions || [];
   const hasAnyContent =
     !!summary || keyPoints.length > 0 || actionItems.length > 0 || decisions.length > 0;
+  const isProcessing = meeting.status !== 'ready';
+  const progressValue = typeof meeting.progress === 'number' ? meeting.progress : 0;
 
   return (
     <div
@@ -193,6 +196,94 @@ export function MeetingDetailModal({ meeting, programName, onClose }: MeetingDet
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+          {/* Processing progress — prominent banner while transcribing / extracting */}
+          {isProcessing && (
+            <section
+              className="rounded-2xl p-5"
+              style={{
+                background:
+                  'linear-gradient(135deg, color-mix(in oklab, var(--coral-solid) 8%, transparent) 0%, color-mix(in oklab, var(--coral-solid) 2%, transparent) 100%)',
+                border: '1px solid color-mix(in oklab, var(--coral-solid) 25%, transparent)',
+              }}
+            >
+              <div className="flex items-start gap-4">
+                <div
+                  className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center"
+                  style={{ background: 'var(--coral-soft)', color: 'var(--coral-ink)' }}
+                >
+                  <Loader2 size={18} className="animate-spin" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div
+                    className="text-sm font-semibold"
+                    style={{ color: 'var(--ink-primary)' }}
+                  >
+                    {meeting.processing_stage || 'Processing recording'}
+                  </div>
+                  <div
+                    className="text-xs mt-0.5"
+                    style={{ color: 'var(--ink-secondary)' }}
+                  >
+                    Summary, key points, action items, and decisions will appear here when done.
+                  </div>
+                  <div className="mt-3">
+                    <ProgressBar value={progressValue} label={undefined} showValue />
+                  </div>
+                  {/* Stage indicator dots */}
+                  <div
+                    className="flex items-center gap-4 mt-3 text-xs"
+                    style={{ color: 'var(--ink-tertiary)' }}
+                  >
+                    <span
+                      className="flex items-center gap-1.5"
+                      style={{
+                        color: progressValue >= 60 ? 'var(--success)' : 'var(--coral-ink)',
+                        fontWeight: progressValue < 60 ? 600 : 400,
+                      }}
+                    >
+                      {progressValue >= 60 ? (
+                        <CheckCircle2 size={12} />
+                      ) : (
+                        <span
+                          className="w-2 h-2 rounded-full animate-pulse-slow"
+                          style={{ background: 'var(--coral-solid)' }}
+                        />
+                      )}
+                      Transcribing
+                    </span>
+                    <span
+                      className="flex items-center gap-1.5"
+                      style={{
+                        color:
+                          progressValue >= 100
+                            ? 'var(--success)'
+                            : progressValue >= 60
+                            ? 'var(--coral-ink)'
+                            : 'var(--ink-tertiary)',
+                        fontWeight: progressValue >= 60 && progressValue < 100 ? 600 : 400,
+                      }}
+                    >
+                      {progressValue >= 100 ? (
+                        <CheckCircle2 size={12} />
+                      ) : progressValue >= 60 ? (
+                        <span
+                          className="w-2 h-2 rounded-full animate-pulse-slow"
+                          style={{ background: 'var(--coral-solid)' }}
+                        />
+                      ) : (
+                        <span
+                          className="w-2 h-2 rounded-full"
+                          style={{ background: 'var(--border-strong)' }}
+                        />
+                      )}
+                      Extracting AI notes
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </section>
+          )}
+
           {/* Recording playback */}
           {meeting.recording_url && (
             <section>
@@ -430,8 +521,8 @@ export function MeetingDetailModal({ meeting, programName, onClose }: MeetingDet
             </section>
           )}
 
-          {/* Empty state when nothing has been extracted yet */}
-          {!hasAnyContent && (
+          {/* Empty state when nothing has been extracted yet (and not processing) */}
+          {!hasAnyContent && !isProcessing && (
             <div
               className="rounded-2xl p-8 text-center"
               style={{

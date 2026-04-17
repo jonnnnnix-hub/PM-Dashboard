@@ -28,6 +28,8 @@ import { Avatar } from '../components/ui/Avatar';
 import { EmptyState } from '../components/ui/EmptyState';
 import { StatTile } from '../components/ui/StatTile';
 import { MeetingDetailModal } from '../components/MeetingDetailModal';
+import { ProgressBar } from '../components/ui/ProgressBar';
+import { processMeeting } from '../lib/meetingPipeline';
 
 const STATUS_TONE: Record<Meeting['status'], 'success' | 'warning' | 'sky' | 'danger' | 'neutral'> = {
   ready: 'success',
@@ -120,13 +122,17 @@ export default function MeetingsHub() {
             .getPublicUrl(filePath);
           const recordingUrl = pub.publicUrl;
 
-          // 2) Persist meeting row
+          // 2) Persist meeting row — starts in 'transcribing' so progress bar shows immediately
+          const attendeesArr = capturedAttendees
+            .split(',')
+            .map((a) => a.trim())
+            .filter(Boolean);
           const row = {
             id: meetingId,
             program_id: capturedProgramId,
             title: capturedTitle,
             date: new Date().toISOString(),
-            attendees: capturedAttendees.split(',').map(a => a.trim()).filter(Boolean),
+            attendees: attendeesArr,
             duration_seconds: capturedDuration,
             recording_url: recordingUrl,
             transcript: '',
@@ -135,7 +141,9 @@ export default function MeetingsHub() {
             action_items: [],
             decisions: [],
             embedding_ids: [],
-            status: 'ready' as const,
+            status: 'transcribing' as const,
+            progress: 0,
+            processing_stage: 'Queued for transcription',
           };
 
           const { data: inserted, error: insErr } = await supabase
@@ -152,6 +160,11 @@ export default function MeetingsHub() {
           setMeetingTitle('');
           setAttendees('');
           setSelectedProgram('');
+
+          // Kick off processing pipeline (runs in background, updates DB -> realtime -> UI)
+          processMeeting(meetingId, capturedTitle, attendeesArr).catch((e) =>
+            console.error('Pipeline kick-off failed:', e)
+          );
         } catch (err: unknown) {
           console.error('Save recording failed:', err);
           let msg = 'Failed to save recording';
@@ -520,6 +533,17 @@ export default function MeetingsHub() {
                             </span>
                           )}
                         </div>
+
+                        {/* Progress bar while still processing */}
+                        {meeting.status !== 'ready' && typeof meeting.progress === 'number' && (
+                          <div className="mt-3">
+                            <ProgressBar
+                              value={meeting.progress}
+                              label={meeting.processing_stage || 'Processing'}
+                              size="sm"
+                            />
+                          </div>
+                        )}
 
                         {meeting.summary && (
                           <p className="mt-2 text-sm clamp-2" style={{ color: 'var(--ink-secondary)' }}>

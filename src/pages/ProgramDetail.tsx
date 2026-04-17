@@ -36,6 +36,7 @@ import {
 } from 'lucide-react';
 import { Shell } from '../components/ui/Shell';
 import { MeetingDetailModal } from '../components/MeetingDetailModal';
+import { ProgressBar } from '../components/ui/ProgressBar';
 import { Card, CardHeader } from '../components/ui/Card';
 import { Tabs } from '../components/ui/Tabs';
 import { Chip } from '../components/ui/Chip';
@@ -1307,6 +1308,15 @@ function MeetingsTab({
                         </span>
                       )}
                     </div>
+                    {meeting.status !== 'ready' && typeof meeting.progress === 'number' && (
+                      <div className="mt-2 max-w-md">
+                        <ProgressBar
+                          value={meeting.progress}
+                          label={meeting.processing_stage || 'Processing'}
+                          size="sm"
+                        />
+                      </div>
+                    )}
                   </div>
                   {meeting.recording_url && (
                     <a

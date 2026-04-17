@@ -168,6 +168,8 @@ export interface Meeting {
   decisions: Decision[];
   embedding_ids: string[];
   status: MeetingStatus;
+  progress?: number;
+  processing_stage?: string | null;
   created_at: string;
 }
 
